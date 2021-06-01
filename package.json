@@ -1,0 +1,19 @@
+{
+  "name": "fromJS",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@masaeedu/adt": "^1.1.1",
+    "@masaeedu/fp": "^10.1.1",
+    "@safareli/free": "^1.0.0",
+    "daggy": "^1.4.0",
+    "ramda": "^0.27.1"
+  }
+}
