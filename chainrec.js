@@ -50,8 +50,8 @@ const runMaybe = free =>
 
 const safeProp = k => o => o[k] ? just(o[k]) : nothing
 const isNothing = x => Boolean(x.is)
-// getValueOrDefault :: a -> Maybe -> a Just
-const getValueOrDefault = def => x => isNothing(x) ? def : x
+// valueOrDefault :: a -> Maybe -> a Just
+const valueOrDefault = def => x => isNothing(x) ? def : x
 
 // path :: String -> {} -> Maybe
 const safePath = x => o => {
@@ -61,7 +61,7 @@ const safePath = x => o => {
 
 
 const proc = compose(
-    getValueOrDefault('something where wrong'),
+    valueOrDefault('something where wrong'),
     runMaybe,
     map(toUpper),
     safePath('name.a.90')
