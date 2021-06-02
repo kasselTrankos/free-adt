@@ -64,6 +64,6 @@ const proc = compose(
     valueOrDefault('something where wrong'),
     runMaybe,
     map(toUpper),
-    safePath('name.a.90')
+    safePath('name.mdm')
 )
-console.log(proc({name: {a: 'jerry'}}))
+console.log(proc({name: {a: 'jerry', mm: 'hola'}}))

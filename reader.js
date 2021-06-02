@@ -13,13 +13,17 @@ Reader.prototype.runWith = function(x) {
     return this.f(x)
 }
 
+// (a -> m b) -> m b
 Reader.prototype.chain = function(that) {
-    return compose(this.f, that.f)
+    console.log(this.f.toString(), that)
+    // console.log(this.f.toString(), that.f.toString())
+    return this.f(x => console.log(x, '11111') ||  that(x))
+    // return compose(this.f, that.f)
 }
 
 // Reader.ask :: (e -> b) -> Reader e b
 Reader.ask = function(f) {
-    const g = f ? f: x =>x
+    const g = f ? f: x => x
     return Reader(g)
 }
 const add =
@@ -35,8 +39,9 @@ const addFarewell = farewell => str =>
 const concat = x => y => `${x}${y}`
 const flow =
   greet('Hola')
-  .map(concat('...'))
-  .chain(addFarewell('See Ya'))
+  .chain(m => console.log(m) || Reader(x => m + 'hola'))
+//   .map(concat('...'))
+//   .chain(x => console.log(x, '1239') || Reader(g => x + g ))
 const b =flow
     .runWith('Jenny')
 
