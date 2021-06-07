@@ -15,10 +15,10 @@ const addFarewell = farewell => str =>
   ask(env => `${str}${farewell} ${env}`)
 
 
-const a = Reader(greet('hola'))
+const a = hi => y =>() => Reader(greet(hi))
   .map(toUpper)
-  .chain(addFarewell(' alo que '))
-  .runWith('Maria')
+  .chain(addFarewell(y))
+  // .runWith('Maria')
 
 const getFullYear = d => d.getFullYear()
 const getMonth = d => d.getMonth()
@@ -28,7 +28,7 @@ const getMinutes = d => d.getMinutes()
 const getSeconds = d => d.getSeconds()
 const addZeroToDate = x => x < 10 ? `0${x}` : x
 const toNumber = x => Number(x)
-const formatDate = converge((d, m, y, h, mm, s)=> `${d}-${m}-${y} ${h}:${mm}:${s}`, [
+const formatDate = f => converge(f, [
   compose(addZeroToDate, toNumber, getDay), 
   compose(addZeroToDate ,toNumber, getMonth), 
   getFullYear,
@@ -37,7 +37,6 @@ const formatDate = converge((d, m, y, h, mm, s)=> `${d}-${m}-${y} ${h}:${mm}:${s
   compose(addZeroToDate, toNumber, getSeconds),
 ])
 
-const addDate = x => `(${new Date()}) ${x}`
 const wrapWith = l => r => str => `${l}${str}${r}`
 const pid = IO(() => process.pid)
   .map(wrapWith('[')(']'))
@@ -46,13 +45,14 @@ const ioToReader = x => Reader.of(x.unsafePerformIO())
 const readerToIO = x => y => IO(() => y.runWith(x))
 const printLn = x => IO(() => console.log(x))
 
-const logger = () =>  Reader.of(new Date())
-  .map(formatDate)
+const dateLogger = IO(() => new Date())
+  .map(formatDate((d, m, y, h, mm, s)=> `${d}-${m}-${y} ${h}:${mm}:${s}`))
+
+const logger = () => ioToReader(dateLogger)
   .map(wrapWith('(')(')'))
   .map(flip(concat)(': '))
   .chain(x => Reader(concat(x)))
-    
-  .map(concat(' <> '))
+  .map(concat('-'))
   .chain(x => ioToReader( 
     pid.map(
       flip(concat)(x))
@@ -60,11 +60,12 @@ const logger = () =>  Reader.of(new Date())
   )
 
 
-const proc = x => compose(
+const proc = x => reader => compose(
   x => x.unsafePerformIO(),
   chain(printLn),
   readerToIO(x),
-  logger,
-)()
+  reader,
+)(x)
 
-proc('soy solo info en este punto podria ser task to IO')
+proc('my logger cleaner')(logger)
+proc('pepa')(a('HIRE ')(' dime que '))
