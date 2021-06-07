@@ -1,17 +1,17 @@
 // fr
 const daggy = require('daggy')
-const { map, toUpper } = require('ramda')
+const { map, toUpper, chain } = require('ramda')
 
 const compose = (...fns) => x => fns.reduceRight((acc, f)=> f(acc), x)
 const I = x => x
 const kCompose = (f, g) => x => f(x).chain(g)
 
-const Free = daggy.taggedSum('Free', {Suspend: ['x', 'f'], Pure: ['x']})
-const {Suspend, Pure} = Free
+const Free = daggy.taggedSum('Free', {Impure: ['x', 'f'], Pure: ['x']})
+const {Impure, Pure} = Free
 
 Free.prototype.chain = function(g) {
     return this.cata({
-        Suspend: (x, f) => Suspend(x, kCompose(f, g)),
+        Impure: (x, f) => Impure(x, kCompose(f, g)),
         Pure: x => g(x)
     })
 }
@@ -20,7 +20,7 @@ Free.prototype.map = function(g) {
     return this.chain(a => Pure(g(a)))
 }
 
-const liftF = command => Suspend(command, Pure)
+const liftF = command => Impure(command, Pure)
 
 const Maybe = daggy.taggedSum('Maybe', {
     Just: ['x'],
@@ -29,6 +29,11 @@ const Maybe = daggy.taggedSum('Maybe', {
 
 const { Just, Nothing } = Maybe
 
+const IO = daggy.tagged('IO', ['f'])
+IO.prototype.unsafePerformIO = function() {
+    return this.f()
+}
+
 const Either = daggy.taggedSum('Either', {
     Left: ['x'],
     Right: ['x']
@@ -36,17 +41,23 @@ const Either = daggy.taggedSum('Either', {
 
 const just = compose(liftF, Just)
 const nothing = liftF(Nothing)
+const io = compose(liftF, IO)
 
 const runMaybe = free =>
   free.cata({
     Pure: x => x,
-    Suspend: (m, q) =>
+    Impure: (m, q) =>
       m.cata({
         Just: x => runMaybe(q(x)),
         Nothing: () => Nothing
       })
   })
 
+const unsafePerformIO = free => 
+  free.cata({
+      Pure: x => x,
+      Impure: (m, q)=> unsafePerformIO(q ( m.f() ) )
+  })
 
 const safeProp = k => o => o[k] ? just(o[k]) : nothing
 const isNothing = x => Boolean(x.is)
@@ -59,11 +70,30 @@ const safePath = x => o => {
     return tail.reduce((acc, c) =>  acc.chain(m => safeProp(c)(m)), safeProp(head)(o))
 }
 
+const printLn = x => io(() => console.log(x))
+
+
+
+
+const maybeToIO = x => io(()=> x)
 
 const proc = compose(
+    unsafePerformIO,
+    chain(printLn),
+    // chain(printLn),
+    maybeToIO,
+    // printLn,
     valueOrDefault('something where wrong'),
     runMaybe,
     map(toUpper),
-    safePath('name.mdm')
+    safePath('name.mm')
 )
-console.log(proc({name: {a: 'jerry', mm: 'hola'}}))
+
+proc({name: { mm: 'apl'}})
+
+
+// const t = io(()=> proc({name: {a: 'jerry', mm: 'hola'}}))
+//     .chain(printLn)
+// unsafePerformIO(t)
+// console.log(tt, unsafePerformIO(tt))ç
+// unsafePerformIO(tt)
