@@ -1,7 +1,7 @@
 // reader
 
 const { Monad } = require('./utils')
-const { toUpper, converge, compose, concat, flip } = require('ramda')
+const { toUpper, converge, compose, concat, flip, map, chain } = require('ramda')
 const { Reader } = require('./adt/reader')
 const { IO } = require('./adt/io')
 const process = require('process');
@@ -42,13 +42,29 @@ const wrapWith = l => r => str => `${l}${str}${r}`
 const pid = IO(() => process.pid)
   .map(wrapWith('[')(']'))
 
-const logger = Reader.of(new Date())
+const ioToReader = x => Reader.of(x.unsafePerformIO())
+const readerToIO = x => y => IO(() => y.runWith(x))
+const printLn = x => IO(() => console.log(x))
+
+const logger = () =>  Reader.of(new Date())
   .map(formatDate)
   .map(wrapWith('(')(')'))
   .map(flip(concat)(': '))
   .chain(x => Reader(concat(x)))
     
   .map(concat(' <> '))
-  .map(concat(pid.unsafePerformIO()))
-  .runWith('jo que error')
-console.log(logger)
+  .chain(x => ioToReader( 
+    pid.map(
+      flip(concat)(x))
+    )
+  )
+
+
+const proc = x => compose(
+  x => x.unsafePerformIO(),
+  chain(printLn),
+  readerToIO(x),
+  logger,
+)()
+
+proc('soy solo info en este punto podria ser task to IO')

@@ -12,4 +12,9 @@ IO.prototype.map = function(f) {
     return IO(()=> f(this.unsafePerformIO()))
 }
 
+IO.prototype.chain = function(f) {
+    
+    return f(this.unsafePerformIO())
+}
+
 module.exports = {IO}

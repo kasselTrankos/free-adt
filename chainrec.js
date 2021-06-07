@@ -1,6 +1,7 @@
 // fr
 const daggy = require('daggy')
 const { map, toUpper, chain } = require('ramda')
+const { Reader } = require('./adt/reader')
 
 const compose = (...fns) => x => fns.reduceRight((acc, f)=> f(acc), x)
 const I = x => x
@@ -71,26 +72,30 @@ const safePath = x => o => {
 }
 
 const printLn = x => io(() => console.log(x))
-
-
-
-
 const maybeToIO = x => io(()=> x)
+const maybetoReader = x => Reader.of(x)
+
+
+const stdout = compose(
+  unsafePerformIO,
+  chain(printLn),
+  maybeToIO,
+)
+
 
 const proc = compose(
-    unsafePerformIO,
-    chain(printLn),
-    // chain(printLn),
-    maybeToIO,
+    //stdout,
     // printLn,
+    maybetoReader,
     valueOrDefault('something where wrong'),
     runMaybe,
     map(toUpper),
+    map(x => x + ' alvato '),
     safePath('name.mm')
 )
 
-proc({name: { mm: 'apl'}})
-
+const y = proc({name: { mm: 'platano'}})
+console.log(y.runWith('zapa'))
 
 // const t = io(()=> proc({name: {a: 'jerry', mm: 'hola'}}))
 //     .chain(printLn)
